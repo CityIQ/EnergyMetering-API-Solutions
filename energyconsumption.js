@@ -103,9 +103,9 @@ async function init() {
                             }
 
                             if ((peaks.length > 0) && (peaks !== undefined)) {
-                                tsResult += `${parseFloat((peaks.reduce((aggr, val) => aggr + val, 0) + lastValue - firstValue) * 0.0001)}\n`
+                                tsResult += `${(parseFloat((peaks.reduce((aggr, val) => aggr + val, 0) + lastValue - firstValue) * 0.0001)).toFixed(4)}\n`
                             } else {
-                                tsResult += `${parseFloat((lastValue - firstValue) * 0.0001)}\n`
+                                tsResult += `${(parseFloat((lastValue - firstValue) * 0.0001)).toFixed(4)}\n`
                             }
                             fs.appendFileSync(`${tenant.name}_${start}_To_${end}_ENERGY_TIMESERIES.csv`, tsResult)
                             console.log(`${sensor.assetUid} - done`)
