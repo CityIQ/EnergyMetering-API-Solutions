@@ -1,0 +1,14 @@
+{
+  "name": "javascript",
+  "version": "1.0.0",
+  "description": "",
+  "directories": {},
+  "scripts": {},
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "fetch": "^1.1.0",
+    "fs": "0.0.1-security",
+    "node-fetch": "^2.6.0"
+  }
+}
