@@ -1,5 +1,5 @@
 const fs = require('fs')
-const tenant = require('./sandiego.js')
+const tenant = require('./credentials.js')
 const fetch = require('node-fetch')
 var btoa = str => new Buffer.from(str).toString('base64')
 const uaaUrl = 'https://auth.aa.cityiq.io/oauth/token?grant_type=client_credentials'
