@@ -56,6 +56,10 @@ async function getEventsByAssetUID(evType, assetUID, start, end = '9999999999999
     return fetchJSON(tenant.service + '/event/assets/' + assetUID + query, { headers })
 }
 
+const sleep = (milliseconds) => {
+    return new Promise(resolve => setTimeout(resolve, milliseconds))
+  }
+
 async function init() {
     if (dates.length < 0 && dates === undefined) console.log("please enter timestamps")
     else if ((dates.length == 2) && (dates[1] - dates[0] > (35 * 24 * 60 * 60000))) console.log("please enter a time range less than 35 days")
@@ -80,6 +84,7 @@ async function init() {
             .then(pagesOfAssets => {
                 pagesOfAssets.forEach(async (sensors) => {
                     for (let sensor of sensors) {
+                        sleep(2000)
                         let allEvents = (await getEventsByAssetUID('ENERGY_TIMESERIES', sensor.assetUid, startTs, endTs + (24 * 3600000))).content
                         if ((allEvents !== undefined) && (allEvents.length > 1)) {
                             let firstDataPoint = allEvents[0]
@@ -108,9 +113,11 @@ async function init() {
                                 tsResult += `${(parseFloat((lastValue - firstValue) * 0.0001)).toFixed(4)}\n`
                             }
                             fs.appendFileSync(`${tenant.name}_${start}_To_${end}_ENERGY_TIMESERIES.csv`, tsResult)
+                            fs.appendFileSync(`log_${start}_To_${end}.csv`, `${sensor.assetUid} - success\n`)
                             console.log(`${sensor.assetUid} - done`)
                         } else {
                             console.log(`${sensor.assetUid} - insufficient events`)
+                            fs.appendFileSync(`log_${start}_To_${end}.csv`, `${sensor.assetUid} - insufficient events\n`)
                         }
                     }
                 })
