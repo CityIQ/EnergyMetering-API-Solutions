@@ -113,11 +113,9 @@ async function init() {
                                 tsResult += `${(parseFloat((lastValue - firstValue) * 0.0001)).toFixed(4)}\n`
                             }
                             fs.appendFileSync(`${tenant.name}_${start}_To_${end}_ENERGY_TIMESERIES.csv`, tsResult)
-                            fs.appendFileSync(`log_${start}_To_${end}.csv`, `${sensor.assetUid} - success\n`)
-                            console.log(`${sensor.assetUid} - done`)
+                            console.log(`${sensor.assetUid} - success`)
                         } else {
                             console.log(`${sensor.assetUid} - insufficient events`)
-                            fs.appendFileSync(`log_${start}_To_${end}.csv`, `${sensor.assetUid} - insufficient events\n`)
                         }
                     }
                 })
