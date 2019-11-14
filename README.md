@@ -28,7 +28,9 @@ energyconsumption.js is one script which:
 ### Running energyconsumption.js
 To Run energyconsumption.js you will need to obtain the Unix start and end times that you want energy metering data for. We recommend using https://www.epochconverter.com/ for start and end input parameters
 
-*Note: the maximum time span that can be used for this script is 35 days.*
+*Note: *
+*The maximum time span that can be used for this script is 35 days.*
+*The minimum time span that can be used for this script is 3 hours.*
 
 Once you have your two unix timestamps (in milliseconds), type the following command in the commandline of the EnergyMetering-API-Solutions Directory
 ```

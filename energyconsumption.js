@@ -1,5 +1,5 @@
 const fs = require('fs')
-const tenant = require('./credentials.js')
+const tenant = require('./portland.js')
 const fetch = require('node-fetch')
 var btoa = str => new Buffer.from(str).toString('base64')
 const uaaUrl = 'https://auth.aa.cityiq.io/oauth/token?grant_type=client_credentials'
@@ -60,6 +60,19 @@ const sleep = (milliseconds) => {
     return new Promise(resolve => setTimeout(resolve, milliseconds))
   }
 
+function findDataPoint(event,timestamp) {
+    let value = {}
+    let diff = Math.round((event.timestamp - timestamp)/event.properties.deltaBaseTimeInMilliseconds)
+    if (diff > 0 && Object.keys(event.measures).length > diff ) {
+        value.value  = event.measures['value'+diff]
+        value.timestamp = event.timestamp +(diff * event.properties.deltaBaseTimeInMilliseconds)
+    } else {
+        value.value = (event.measures.value !== undefined) ?  event.measures.value : event.measures.value1 
+        value.timestamp = event.timestamp
+    } 
+    return value
+}
+
 async function init() {
     if (dates.length < 0 && dates === undefined) console.log("please enter timestamps")
     else if ((dates.length == 2) && (dates[1] - dates[0] > (35 * 24 * 60 * 60000))) console.log("please enter a time range less than 35 days")
@@ -77,7 +90,7 @@ async function init() {
 
         console.log(`Getting total energy consumed from ${start} to ${end}`)
 
-        let tsHeading = `Asset,Coordinates,Start Date,Start Timestamp,End Date,End Timestamp,CIQ EventType,unit,total energy consumption for this time period  \n`
+        let tsHeading = `Asset,Coordinates,Start Date Time (UTC),Start Timestamp,End Date Time (UTC),End Timestamp,CIQ EventType,deltaTime(hours),unit,total energy consumption for this deltaTime  \n`
         fs.writeFileSync(`${tenant.name}_${start}_To_${end}_ENERGY_TIMESERIES.csv`, tsHeading)
 
         getListOfAssets('EM_SENSOR')
@@ -85,16 +98,15 @@ async function init() {
                 pagesOfAssets.forEach(async (sensors) => {
                     for (let sensor of sensors) {
                         sleep(2000)
-                        let allEvents = (await getEventsByAssetUID('ENERGY_TIMESERIES', sensor.assetUid, startTs, endTs + (24 * 3600000))).content
+                        let allEvents = (await getEventsByAssetUID('ENERGY_TIMESERIES', sensor.assetUid, startTs, endTs )).content
                         if ((allEvents !== undefined) && (allEvents.length > 1)) {
-                            let firstDataPoint = allEvents[0]
-                            let firstValue = (firstDataPoint.measures.value !== undefined) ? firstDataPoint.measures.value : firstDataPoint.measures.value1
+                            let firstDataPoint = findDataPoint(allEvents[0],startTs)
+                            let lastDataPoint = findDataPoint(allEvents[allEvents.length - 1], endTs)
 
-                            let lastDataPoint = allEvents[allEvents.length - 1]
-                            let lastValue = lastDataPoint.measures[(lastDataPoint.measures.value !== undefined) ? lastDataPoint.measures.value : 'value' + Object.keys(lastDataPoint.measures).length]
+                            let deltaTime = (lastDataPoint.timestamp - firstDataPoint.timestamp) / 3600000
 
-                            let tsResult = `${sensor.assetUid},"${sensor.coordinates}",${(new Date(firstDataPoint.timestamp)).toDateString()},${firstDataPoint.timestamp},`
-                                + `${(new Date(lastDataPoint.timestamp)).toDateString()},${lastDataPoint.timestamp},ENERGY_TIMESERIES,kWh,`
+                            let tsResult = `${sensor.assetUid},"${sensor.coordinates}",${(new Date(firstDataPoint.timestamp)).toUTCString()},${firstDataPoint.timestamp},`
+                                + `${(new Date(lastDataPoint.timestamp)).toUTCString()},${lastDataPoint.timestamp},${deltaTime},ENERGY_TIMESERIES,kWh,`
 
                             let peaks = []
                             for (let i = 0; i < (allEvents.length - 1); i++) {
@@ -108,9 +120,9 @@ async function init() {
                             }
 
                             if ((peaks.length > 0) && (peaks !== undefined)) {
-                                tsResult += `${(parseFloat((peaks.reduce((aggr, val) => aggr + val, 0) + lastValue - firstValue) * 0.0001)).toFixed(4)}\n`
+                                tsResult += `${(parseFloat((peaks.reduce((aggr, val) => aggr + val, 0) + lastDataPoint.value - firstDataPoint.value) * 0.0001)).toFixed(4)}\n`
                             } else {
-                                tsResult += `${(parseFloat((lastValue - firstValue) * 0.0001)).toFixed(4)}\n`
+                                tsResult += `${(parseFloat((lastDataPoint.value - firstDataPoint.value) * 0.0001)).toFixed(4)}\n`
                             }
                             fs.appendFileSync(`${tenant.name}_${start}_To_${end}_ENERGY_TIMESERIES.csv`, tsResult)
                             console.log(`${sensor.assetUid} - success`)
