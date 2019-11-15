@@ -1,5 +1,5 @@
 const fs = require('fs')
-const tenant = require('./portland.js')
+const tenant = require('./credentials.js')
 const fetch = require('node-fetch')
 var btoa = str => new Buffer.from(str).toString('base64')
 const uaaUrl = 'https://auth.aa.cityiq.io/oauth/token?grant_type=client_credentials'
@@ -90,7 +90,7 @@ async function init() {
 
         console.log(`Getting total energy consumed from ${start} to ${end}`)
 
-        let tsHeading = `Asset,Coordinates,Start Date Time (UTC),Start Timestamp,End Date Time (UTC),End Timestamp,CIQ EventType,deltaTime(hours),unit,total energy consumption for this deltaTime  \n`
+        let tsHeading = `Asset,Coordinates,Start Day Of the Week,Start Date Time (UTC),Start Timestamp,End Day Of the Week,End Date Time (UTC),End Timestamp,deltaTime(hours),CIQ EventType,unit,total energy consumption for this deltaTime  \n`
         fs.writeFileSync(`${tenant.name}_${start}_To_${end}_ENERGY_TIMESERIES.csv`, tsHeading)
 
         getListOfAssets('EM_SENSOR')
